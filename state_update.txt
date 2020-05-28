@@ -1,4 +1,4 @@
-ECHDA Weekly Update</b> (05/28/2020)
+ECHDA Weekly Update (05/28/2020)
 
 During the last 7 days in the state of CT,
 
@@ -6,4 +6,4 @@ During the last 7 days in the state of CT,
     - the number of daily reported deaths has decreased by 27.5% 
     - and the number of current hospitalizations has decreased by 18% 
 
-For more information, see: https://gdancik.shinyapps.io/echda</a>
+For more information, see: https://gdancik.shinyapps.io/echda
