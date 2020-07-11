@@ -10,6 +10,9 @@ function func() {
   exit -1
 }
 
+
+git pull
+
 curdir=$PWD
 echo "executing read_data.R..."
 cd ../..
