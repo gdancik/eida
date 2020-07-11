@@ -3,7 +3,6 @@ library(dplyr)
 # Rscript generate_html directory_with_data_folder
 #    saves html files to updates/
 
-
 args <- commandArgs(trailingOnly = TRUE)
 
 dir <- getwd() 
@@ -66,7 +65,7 @@ generate_html_update <- function(x, county = NULL, saveFile = FALSE) {
   d2 <- as.Date(x$date[n])
 
 
-  msg1 <- paste('<li>there were', cases$current, 'new daily reported lab-confirmed cases', cases$change, "</li>\n")
+  msg1 <- paste('<li>there were', cases$current, 'new daily reported confirmed/probable cases', cases$change, "</li>\n")
   msg2 <- paste('<li>there were', deaths$current, 'new daily reported COVID-19 associated deaths', deaths$change, "</li>\n")
   msg3 <- paste('<li>there were', hosps$current, 'current hospitalizations', hosps$change, "</li>\n")
   
