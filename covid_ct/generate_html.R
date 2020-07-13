@@ -14,6 +14,13 @@ file <- paste0(dir,"/data/state_and_county.RData")
     
 load(file)
 
+# infers the sum of the last 7 days; rather than a simple sum,
+# this will work correctly for missing values
+inferSum7 <- function(x) {
+  x <- x[!is.na(x)]
+  mean(x) * 7
+}
+
 formatChange <- function(x, hospitalizations = FALSE) {
   
   n <- length(x)
@@ -22,8 +29,12 @@ formatChange <- function(x, hospitalizations = FALSE) {
     current <- x[n]
     prior <- x[n-7]
   } else {
-    current <- sum(x[(n-6):n])
-    prior <- sum(x[ (n-13):(n-7)])
+    current <- inferSum7(x[(n-6):n])
+    prior <- inferSum7(x[ (n-13):(n-7)])
+  }
+  
+  if (is.na(current) || is.na(prior)) {
+    return(list(current = "?", change = "(data not available at this time)"))
   }
   
   pc <- (current - prior)
@@ -54,13 +65,12 @@ generate_html_update <- function(x, county = NULL, saveFile = FALSE) {
   deaths <- formatChange(x$new_deaths)
   
   hh <- NULL
-  if ('hospitalizations' %in% colnames(x)) {
-    hh <- x$hospitalizations
+  if ('hospitalizedcases' %in% colnames(x)) {
+    hh <- x$hospitalizedcases
   } else {
     hh <- x$hospitalization
   }
-  hosps <- formatChange(hh)
-  
+  hosps <- formatChange(hh, TRUE)
   
   d2 <- as.Date(x$date[n])
 
