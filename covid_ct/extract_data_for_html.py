@@ -10,7 +10,7 @@ usage: python extract_data_for_html.py [-h] dataFile page inputState increaseOnl
 Retrieve data from covidactnow.org for overall covid threat, daily new cases, infection rates
 positive test rates, icu availability, and contract tracing coverage.
 
-Garunteed data collection or new creation of data file.  HTML generation based on increaseOnly variable,
+Guaranteed data collection or new creation of data file.  HTML generation based on increaseOnly variable,
 can either always generate or only generate when an increase in a threat level is detected.
 
 All data gathered by xpath as selenium methods are unable to gather targeted data in this instance.
