@@ -87,7 +87,7 @@ def getWebData (inputState, geckoPath):
     driver.close()
     
     # create list of data to be returned
-
+    
     ctData = [lastUpdate]
     #indices in data/ratings match for category, iterate through both to populate new list of data
     for i in range(len(data)):
@@ -99,47 +99,58 @@ def getWebData (inputState, geckoPath):
     ctData.append(threatLevel[1]) # longer expanatory string
     ctData.append(state)
 
+    
+    # newDataDict = {'updated':lastUpdate, 'risk':overallRisk, 'threat level':threatLevel[0], 
+    #                 'threat string':threatLevel[1], 'state':state}
+   
+    # info = ['NC value', 'NC rating', 'IR value', 'IR rating', 'PTR value', 'PTR rating', 
+    #         'ICU value', 'ICU rating', 'CT value', 'CT rating']
+    
+    # infoIndex = 0
+    # for i in range(len(data)):
+    #     newDataDict[info[infoIndex]] = data[i]
+    #     newDataDict[info[infoIndex + 1]] = ratings[i]
+    #     infoIndex += 2
+        
+    
     return df, ctData
 
 
-def getPrevData(file):
+def writeNewFile(output):
     
-    if not os.path.isfile(file): # create new file if does not exist
-        with open(file, 'w') as writeFile:
-            writeFile.write('Last Updated\tDaily New Cases\tInfection Rate\tPos Test Rate\tICU Headroom\tContacts Traced\tRisk\tThreat Level\n')
-            writeFile.write('\n' + ('\t').join(output[:-1]))
-    
-    else: # update and perform testing on file
-        
-        newLineFlag = False # issue of auto creation of \n when modifying text file for testing
-        
-        # get last line of file (most recent data)
-        line = []
-        with open(file) as inFile:
-            inFile.seek(0, 2) # seek to file end
-            index = inFile.tell() # get index of last character in line
-            index = index - 1
-            inFile.seek(index) # go to last character in file
-            
-            # if file ends with \n skip
-            if inFile.read(1) == '\n':
-                index = index - 1
-                inFile.seek(index)
-                newLineFlag = True
-            # loop till end of last line (\n character) / add each character to list
-            while inFile.read(1) != '\n':
-                line.append(inFile.read(1))
-                index = index - 1
-                inFile.seek(index)
-                
-            line.append(inFile.read(1))
-                        
-        line.reverse()
-        line = ('').join(line) # reverse list and combine to string
-        return [line.strip('\n ').split('\t'), newLineFlag]
-        
-    return None # if new file was created
+    with open(file, 'w') as writeFile:
+        writeFile.write('Last Updated\tDaily New Cases\tInfection Rate\tPos Test Rate\tICU Headroom\tContacts Traced\tRisk\tThreat Level\n')
+        writeFile.write('\n' + ('\t').join(output[:-2]))    
 
+def getPrevData(file):
+
+    newLineFlag = False # issue of auto creation of \n when modifying text file for testing
+    
+    # get last line of file (most recent data)
+    line = []
+    with open(file) as inFile:
+        inFile.seek(0, 2) # seek to file end
+        index = inFile.tell() # get index of last character in line
+        index = index - 1
+        inFile.seek(index) # go to last character in file
+        
+        # if file ends with \n skip
+        if inFile.read(1) == '\n':
+            index = index - 1
+            inFile.seek(index)
+            newLineFlag = True
+        # loop till end of last line (\n character) / add each character to list
+        while inFile.read(1) != '\n':
+            line.append(inFile.read(1))
+            index = index - 1
+            inFile.seek(index)
+            
+        line.append(inFile.read(1))
+                    
+    line.reverse()
+    line = ('').join(line) # reverse list and combine to string
+    return [line.strip('\n ').split('\t'), newLineFlag]
+        
 
 # compare new and previous data (excluding contact tracing)
 def compareData (new, prev, testValue, increaseOnly): # new/prev[0] is value, [1] is risk level
@@ -221,48 +232,57 @@ def generateHTML (output, prevData, inputState, page, increaseOnly):
     # get comparison string for contact tracing
     contactTraced = compareContactTrace([output[9],output[10]], [prevData[9],prevData[10]], increaseOnly)
     
-    if not increaseOnly: # if guaranteed page generation
-    
-        # generate HTML
+    # get list of all increased threat levels (if function returned 1)
+    increased = [i[1] for i in [newCases, infectionRate, posTestRate, icuHeadroom, contactTraced] if i[0] == 1]
+    # if value has increased    
+    if len(increased) > 0: # if increase in threat - valid for both T/F increaseOnly
+        # get list of all threat levels without increase (function returned 0)
+        noIncrease = [i[1] for i in [newCases, infectionRate, posTestRate, icuHeadroom, contactTraced] if i[0] == 0]
+        # generate html
         with open(page, 'w') as writeFile:
-            
             writeFile.write('<h1>Daily Update Tracker for COVID</h1>')
             writeFile.write('<p>Current data updated on ' + output[0] + 
                             ' -- Previous data updated on ' + prevData[0] + '</p>')
             writeFile.write('<p>' + overallThreat + '</p>')
-            writeFile.write('<ul>') # unordered list with all data
-            [writeFile.write('<li>' + i + '</li>') for i in [newCases, infectionRate, posTestRate, icuHeadroom, contactTraced]]
+            writeFile.write('<p>There has been an increase in risk for the following categories:</p><ul>')
+            [writeFile.write('<li>' + i + '</li>') for i in increased] # unordered list for increased data
+            writeFile.write('</ul><p>The risks for the other categories are as follows:</p>')
+            writeFile.write('<ul style="list-style-type:square;">') # unordered list with non-increased data
+            [writeFile.write('<li>' + i + '</li>') for i in noIncrease]
             writeFile.write('</ul>')
             writeFile.write('<p>You can view the current scorecard for ' + output[14] + 
                 ' by clicking here: <a href="https://covidactnow.org/embed/us/' + 
                 inputState + '">link</a>') # link to scorecard for state
-            
-    else: # if only printing increased threat
-        # get list of all increased threat levels (if function returned 1)
-        increased = [i[1] for i in [newCases, infectionRate, posTestRate, icuHeadroom, contactTraced] if i[0] == 1]
-        # if value has increased    
-        if len(increased) > 0:
-            # get list of all threat levels without increase (function returned 0)
-            noIncrease = [i[1] for i in [newCases, infectionRate, posTestRate, icuHeadroom, contactTraced] if i[0] == 0]
-            # generate html
-            with open(page, 'w') as writeFile:
-                writeFile.write('<h1>Daily Update Tracker for COVID</h1>')
-                writeFile.write('<p>Current data updated on ' + output[0] + 
-                                ' -- Previous data updated on ' + prevData[0] + '</p>')
-                writeFile.write('<p>' + overallThreat + '</p>')
-                writeFile.write('<p>There has been an increase in risk for the following categories:</p><ul>')
-                [writeFile.write('<li>' + i + '</li>') for i in increased] # unordered list for increased data
-                writeFile.write('</ul><p>The risks for the other categories are as follows:</p>')
-                writeFile.write('<ul style="list-style-type:square;">') # unordered list with non-increased data
-                [writeFile.write('<li>' + i + '</li>') for i in noIncrease]
-                writeFile.write('</ul>')
-                writeFile.write('<p>You can view the current scorecard for ' + output[14] + 
-                    ' by clicking here: <a href="https://covidactnow.org/embed/us/' + 
-                    inputState + '">link</a>') # link to scorecard for state
-            print('Web page generated')
+        print('Web page generated - increase in threat detected')
+    elif not increaseOnly: # if no increase in threat and increaseOnly == False
+        testingDict = {'Low': 0, 'Medium': 1, 'High': 2, 'Critical': 3}
+        if testingDict[prevData[11]] > testingDict[output[11]]:
+            compareString = 'decrease from last week'
         else:
-            print('No page generated - no increase in threat')
-            
+            compareString = 'no change from last week'
+        with open(page, 'w') as writeFile:
+            writeFile.write('<h1>Daily Update Tracker for COVID</h1>')
+            writeFile.write('<p>Current data updated on ' + output[0] + 
+                            ' -- Previous data updated on ' + prevData[0] + '</p>')
+            writeFile.write('<p>According to CovidActNow, the current COVID threat level is ' + output[11] + 
+                            ' (' + compareString + '). For more information, see the attached scorecard \
+                                or visit <a href="https://covidactnow.org/embed/us/' + inputState + 
+                                '">https://covidactnow.org/embed/us/' + inputState + '</a>')
+        print('Web page generated - no increase in threat')
+                
+    else:
+        print('No web page generated - no increase in threat')
+        
+        
+def verifyBoolArg(increaseOnly):
+    if increaseOnly.lower() == 'true':
+        return True
+    elif increaseOnly.lower() == 'false':
+        return False
+    else:
+        raise argparse.ArgumentTypeError('increaseOnly argument must be boolean')
+        
+
 # arguments for command line execution
 ap = argparse.ArgumentParser(description='Extract info from covidactnow, generate HTML, capture data')
 ap.add_argument('file', help = 'file containing previous covid data or a new file to create')
@@ -285,13 +305,14 @@ inputState = args['inputState']
 increaseOnly = args['increaseOnly']
 geckoPath = args['geckoDriverPath']
 
-response = getPrevData(file)
+increaseOnly = verifyBoolArg(increaseOnly)
+
 data = getWebData(inputState, geckoPath)
 # df = data[0]
 output = data[1]
 
-
-if response is not None: # getPrevData returns None if data file newly created
+if os.path.isfile(file): # if file with covid data exists
+    response = getPrevData(file)
     prevData = response[0] # list with previous data
     newLineFlag = response[1] # flag indicating whether prev line ends with \n
     
@@ -305,4 +326,5 @@ if response is not None: # getPrevData returns None if data file newly created
                 
         generateHTML(output, prevData, inputState, page, increaseOnly)
 else:
+    writeNewFile(output)
     print('New file created')
