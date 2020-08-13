@@ -56,24 +56,14 @@ def getWebData (inputState, geckoPath):
     # numerical values for all categories accessed by same xpath
     ctDataXpath = "//p[@class='MuiTypography-root sc-fzoWqW kjrSyq MuiTypography-body1']"
     
-    data = driver.find_elements_by_xpath(ctDataXpath)
-    data = [d.text.replace('Beta', '') for d in data] # create list of values ignore Beta
+    # create list of all values - ignore Beta
+    data = [d.text.replace('Beta', '') for d in driver.find_elements_by_xpath(ctDataXpath)]
     
-    # xpaths for ratings slightly different - jss## incremenets by 2
-    dailyNewCasesRatingXpath = "//div[@class='MuiBox-root jss42 sc-fzonjX fnCkZA']"
-    infectionRatingXpath = "//div[@class='MuiBox-root jss44 sc-fzonjX fnCkZA']"
-    posTestRatingXpath = "//div[@class='MuiBox-root jss46 sc-fzonjX fnCkZA']"
-    icuRatingXpath = "//div[@class='MuiBox-root jss48 sc-fzonjX fnCkZA']"
-    contactTraceRatingXpath = "//div[@class='MuiBox-root jss50 sc-fzonjX fnCkZA']"
+    # xpath for all ratings, contains() has unique string
+    # ratingsXpath = "//div[starts-with(@class, 'MuiBox-root jss') and contains(@class, 'sc-fzonjX fnCkZA')]"
+    ratingsXpath = "//div[contains(@class, 'sc-fzonjX fnCkZA')]"
+    ratings = [d.text for d in driver.find_elements_by_xpath(ratingsXpath)]
 
-    # get ratings, options 'low', 'medium', 'high', 'critical'
-    dailyNewCasesRating = driver.find_element_by_xpath(dailyNewCasesRatingXpath).text
-    infectionRating = driver.find_element_by_xpath(infectionRatingXpath).text
-    posTestRating = driver.find_element_by_xpath(posTestRatingXpath).text
-    icuRating = driver.find_element_by_xpath(icuRatingXpath).text
-    contactTraceRating = driver.find_element_by_xpath(contactTraceRatingXpath).text
-
-    ratings = [dailyNewCasesRating, infectionRating, posTestRating, icuRating, contactTraceRating]
     
     # create dataframe, returned but unused
     pandaData = {'Value':data, 'Rating':ratings}
@@ -121,6 +111,7 @@ def writeNewFile(output):
     with open(file, 'w') as writeFile:
         writeFile.write('Last Updated\tDaily New Cases\tInfection Rate\tPos Test Rate\tICU Headroom\tContacts Traced\tRisk\tThreat Level\n')
         writeFile.write('\n' + ('\t').join(output[:-2]))    
+
 
 def getPrevData(file):
 
