@@ -184,7 +184,7 @@ def compareContactTrace (new, prev, increaseOnly): # new/prev[0] is value, [1] i
     if increaseOnly: # if only tracking increase in threat, 0 or 1 to capture increase occurance
         # if new less than prev, reduction in tracing / increase in threat
         if testingDict[prev[1]] >= testingDict[new[1]]: # no increase
-            return [0, 'Contact Tracing - ' + new[1] + ' (' + new[0] + ')'] # return current values
+            return [0, 'Contact Tracing: ' + new[0] + ' (' + new[1] + ')'] # return current values
         else: # increase in threat, return warning string with new and previous values
             return [1, '<b>Contact Tracing</b> coverage has <b>decreased</b> from <b>' + prev[1] + \
                     ' (' + prev[0] + ')</b> to <b>' + new[1] + ' (' + new[0] + ')</b>']            
