@@ -64,7 +64,13 @@ def getWebData (inputState, geckoPath):
     # xpath for all ratings, contains() has unique string
     # ratingsXpath = "//div[starts-with(@class, 'MuiBox-root jss') and contains(@class, 'sc-fzonjX fnCkZA')]"
     ratingsXpath = "//div[contains(@class, 'sc-fzonjX fnCkZA')]"
-    ratings = [d.text for d in driver.find_elements_by_xpath(ratingsXpath)]
+
+    res = driver.find_elements_by_xpath(ratingsXpath)
+    if len(res) != 5 :
+        print('Error:', len(res), 'ratings found instead of 5. The web page structure may have changed!')
+        exit(-1)
+
+    ratings = [d.text for d in res]
 
     
     # create dataframe, returned but unused
