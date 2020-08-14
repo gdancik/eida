@@ -3,7 +3,7 @@
 """
 Created on Fri Jul 17 14:54:39 2020
 
-@author: kewilliams
+@author: kewilliams (minor modifications by gdancik)
 
 usage: python extract_data_for_html.py [-h] dataFile page inputState increaseOnly [geckoDriverPath]
 
@@ -25,6 +25,8 @@ import os
 import time
 import argparse
 import sys
+from datetime import date
+
 
 def getWebData (inputState, geckoPath):
     
@@ -151,7 +153,7 @@ def compareData (new, prev, testValue, increaseOnly): # new/prev[0] is value, [1
     
     if increaseOnly: # if only tracking increases in threat, 0 or 1 returned to track whether increase in threat
         if testingDict[prev[1]] >= testingDict[new[1]]: # if prev threat worse or equal to new
-            return [0, testValue + ' - ' + new[1] + ' (' + new[0] + ')']
+            return [0, testValue + ': ' + new[0] + ' (' + new[1] + ')']
         else: # return warning string 
             return [1, 'The risk level for <b>' + testValue + '</b> has <b>increased</b> from <b>' + \
                     prev[1] + ' (' + prev[0] + ')</b> to <b>' + new[1] + ' (' + new[0] + ')</b>']            
@@ -207,8 +209,8 @@ def compareCovidThreatLevel (new, prev):
         return '<b>Overall COVID risk</b> has <b>decreased</b> from <b>' + prev + \
             '</b> to <b>' + newRisk + '</b><br><br>' + threatLevel
     else:
-        return '<b>Overall COVID risk</b> has <b>increased</b> from <b>' + prev + \
-            '</b> to <b>' + newRisk + '</b><br><br>' + threatLevel
+        return '<b>the overall COVID risk of COVID-19 has increased from ' + prev + \
+            ' to ' + newRisk + '</b>. ' + threatLevel + '.'
     
     
 # current data list, previous data list, state abbreviation, web page, bool to only track threat increases
@@ -231,20 +233,47 @@ def generateHTML (output, prevData, inputState, page, increaseOnly):
         noIncrease = [i[1] for i in [newCases, infectionRate, posTestRate, icuHeadroom, contactTraced] if i[0] == 0]
         # generate html
         with open(page, 'w') as writeFile:
-            writeFile.write('<h1>Daily Update Tracker for COVID</h1>')
-            writeFile.write('<p>Current data updated on ' + output[0] + 
-                            ' -- Previous data updated on ' + prevData[0] + '</p>')
-            writeFile.write('<p>' + overallThreat + '</p>')
-            writeFile.write('<p>There has been an increase in risk for the following categories:</p><ul>')
+            #writeFile.write('<h1>Daily Update Tracker for COVID</h1>')
+            writeFile.write('<h3>EIDA/Covid in CT Alert (' + 
+                    date.today().strftime('%m/%d/%Y') +')</h3>')
+
+#            writeFile.write('<p>Current data updated on ' + output[0] + 
+#                            ' -- Previous data updated on ' + prevData[0] + '</p>')
+            writeFile.write('<p>Based on data provided by CovidActNow (<a href = "https://covidactnow.org/">https://covidactnow.org/</a>), ' + overallThreat + '</p>')
+
+            # print description of metrics
+            s = """
+            CovidActNow tracks risk across 5 categories:
+            <ul>
+            <li>Daily new cases: this is the daily number of new cases per 100,00 individuals; a value > 1 indicates that the virus is currently not being contained. </li>
+            <li>Infection rate: this is the average number of people that an infected individual infects; a value < 1 indicates that the number of infections is decreasing.</li>
+<li>Positive test rate: this is the percent of people tested who are positive for COVID-19; experts recommend that this value be < 3% to ensure that a sufficient amount of testing is occuring.</li>
+<li>ICU headroom used: this is the percent of ICU beds in use; a value < 50% indicates that there is sufficient ICU capacity in the event of another wave of infections.</li>
+<li>Contacts traced: this is the percent of contacts traced within 48 hours; a value over 90% is recommended for COVID to be contained.</li>
+</ul>
+            """
+
+            writeFile.write(s)
+            #writeFile.write('<p>' + overallThreat + '</p>')
+            writeFile.write('<p><b>In the past day there has been an increase in risk for the following categories:</b></p><ul>')
             [writeFile.write('<li>' + i + '</li>') for i in increased] # unordered list for increased data
             writeFile.write('</ul><p>The risks for the other categories are as follows:</p>')
-            writeFile.write('<ul style="list-style-type:square;">') # unordered list with non-increased data
+            writeFile.write('<ul>') # unordered list with non-increased data
             [writeFile.write('<li>' + i + '</li>') for i in noIncrease]
             writeFile.write('</ul>')
-            writeFile.write('<p>You can view the current scorecard for ' + output[14] + 
-                ' by clicking here: <a href="https://covidactnow.org/embed/us/' + 
-                inputState + '">link</a>') # link to scorecard for state
-        print('Web page generated - increase in threat detected')
+
+            if output[14] == 'Connecticut' :
+                writeFile.write('<p>You can view the current scorecard for ' + output[14] + 
+                    ' by visiting: <a href="https://covidactnow.org/embed/us/' + 
+                    inputState + '">https://covidactnow.org/embed/us/' + inputState + '</a>' +
+                    ' or our COVID in CT page at ' +
+                    '<a href = "https://eida.easternct.edu/shiny/app/covid-ct">https://eida.easternct.edu/shiny/app/covid-ct</a>.') 
+            else :
+                writeFile.write('<p>You can view the current scorecard for ' + output[14] + 
+                    ' by visiting <a href="https://covidactnow.org/embed/us/' + 
+                    inputState + '">link</a>') # link to scorecard for state
+
+        print('\n\nWeb page generated - increase in threat detected')
     elif not increaseOnly: # if no increase in threat and increaseOnly == False
         testingDict = {'Low': 0, 'Medium': 1, 'High': 2, 'Critical': 3}
         if testingDict[prevData[11]] > testingDict[output[11]]:
