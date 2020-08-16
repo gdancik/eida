@@ -21,7 +21,7 @@ python extract_data_for_html.py scorecard.csv alerts/CT_alert_$d.html CT True
 
 echo "uploading to github..."
 git add alerts/*
-git commit -m "Alert issued on $d"
+git commit -a -m "Alert issued on $d"
 git push
 
 
