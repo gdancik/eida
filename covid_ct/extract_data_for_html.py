@@ -255,7 +255,7 @@ def generateHTML (output, prevData, inputState, page, increaseOnly):
             <li>Infection rate: this is the average number of people that an infected individual infects; a value < 1 indicates that the number of infections is decreasing.</li>
 <li>Positive test rate: this is the percent of people tested who are positive for COVID-19; experts recommend that this value be < 3% to ensure that a sufficient amount of testing is occuring.</li>
 <li>ICU headroom used: this is the percent of ICU beds in use; a value < 50% indicates that there is sufficient ICU capacity in the event of another wave of infections.</li>
-<li>Contacts traced: this is the percent of contacts traced within 48 hours; a value over 90% is recommended for COVID to be contained.</li>
+<li>Tracers hired: this is the percent of contacts traced within 48 hours; a value over 90% is recommended for COVID to be contained, and indicates that enough tracers have been hired.</li>
 </ul>
             """
 
