@@ -20,12 +20,13 @@ xpaths selected are not specific to state and are valid for all us state abbrevi
 
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
-import pandas as pd
+# import pandas as pd
 import os
 import time
 import argparse
 import sys
 from datetime import date
+import datetime
 
 
 def getWebData (inputState, geckoPath):
@@ -43,27 +44,27 @@ def getWebData (inputState, geckoPath):
     time.sleep(1) # allow page load
     
     # get overall threat level. text \n delimited - first index ignored ('COVID THREAT LEVEL')
-    threatLevelXpath = "//div[@class='MuiBox-root jss20 sc-pRTZB eBhZMp']"
+    threatLevelXpath = "//div[@class='MuiBox-root jss20 sc-qapaw fXKKch']"
     threatLevel = driver.find_element_by_xpath(threatLevelXpath)
     threatLevel = threatLevel.text.split('\n')[1:]
     # condense threat level string, arguably only need first sentence or up to first comma.
     threatLevel[1] = threatLevel[1].replace(',', '.').split('.')[0]
     
     # get overall risk, text /n delimited
-    overallRiskXpath = "//div[@class='sc-fznAgC dSEOxJ']"
+    overallRiskXpath = "//div[@class='sc-fznLPX dtmoaU']"
     overallRisk = driver.find_element_by_xpath(overallRiskXpath).text.split('\n')
     state = overallRisk[0] # get state string
     overallRisk = overallRisk[2] # overwrite list to string containing risk
     
     # numerical values for all categories accessed by same xpath
-    ctDataXpath = "//p[@class='MuiTypography-root sc-fzoWqW kjrSyq MuiTypography-body1']"
+    ctDataXpath = "//p[@class='MuiTypography-root sc-fzplgP iNPcrX MuiTypography-body1']"
     
     # create list of all values - ignore Beta
     data = [d.text.replace('Beta', '') for d in driver.find_elements_by_xpath(ctDataXpath)]
     
     # xpath for all ratings, contains() has unique string
     # ratingsXpath = "//div[starts-with(@class, 'MuiBox-root jss') and contains(@class, 'sc-fzonjX fnCkZA')]"
-    ratingsXpath = "//div[contains(@class, 'sc-fzonjX fnCkZA')]"
+    ratingsXpath = "//div[contains(@class, 'sc-fzqzEs ghDBgq')]"
 
     res = driver.find_elements_by_xpath(ratingsXpath)
     if len(res) != 5 :
@@ -73,19 +74,26 @@ def getWebData (inputState, geckoPath):
     ratings = [d.text for d in res]
 
     
-    # create dataframe, returned but unused
-    pandaData = {'Value':data, 'Rating':ratings}
-    df = pd.DataFrame(pandaData, index=['Daily New Cases', 'Infection Rate', 'Positive Test Rate', 
-                                        'ICU Headroom Used', 'Contacts Traced'])
+    # # create dataframe, returned but unused
+    # pandaData = {'Value':data, 'Rating':ratings}
+    # df = pd.DataFrame(pandaData, index=['Daily New Cases', 'Infection Rate', 'Positive Test Rate', 
+    #                                     'ICU Headroom Used', 'Contacts Traced'])
     
     # get string containing date of last data update
-    lastUpdateXpath = "//p[@class='MuiTypography-root sc-fzqMdD fZQoNm MuiTypography-body1']"
+    lastUpdateXpath = "//p[@class='MuiTypography-root sc-qQmou jqDvEh MuiTypography-body1']"
     lastUpdate = driver.find_element_by_xpath(lastUpdateXpath).text.lstrip('Last Updated ')
     
     driver.close()
-    
+
+    # convert date to previous form (page was updated)
+    try:
+        pageDateFmt = '%B %d, %Y'
+        newDateFmt = '%m/%d/%Y'
+        lastUpdate = datetime.datetime.strptime(lastUpdate, pageDateFmt).strftime(newDateFmt)
+    except:
+        raise Exception('Date format changed on website')
+        
     # create list of data to be returned
-    
     ctData = [lastUpdate]
     #indices in data/ratings match for category, iterate through both to populate new list of data
     for i in range(len(data)):
@@ -109,9 +117,8 @@ def getWebData (inputState, geckoPath):
     #     newDataDict[info[infoIndex]] = data[i]
     #     newDataDict[info[infoIndex + 1]] = ratings[i]
     #     infoIndex += 2
-        
     
-    return df, ctData
+    return ctData
 
 
 def writeNewFile(output):
@@ -149,6 +156,31 @@ def getPrevData(file):
     line.reverse()
     line = ('').join(line) # reverse list and combine to string
     return [line.strip('\n ').split('\t'), newLineFlag]
+
+def getPrevWeek(file, currentDay):
+    dateFormat = '%m/%d/%Y'
+    #get day of year number, easier to track days when crossing over months
+    currentDayNum = datetime.datetime.strptime(currentDay, dateFormat).timetuple().tm_yday
+    
+    with open(file) as inFile:
+        
+        inFile.readline() # skip first two lines
+        inFile.readline()
+
+        data = inFile.readline().strip('\n').split('\t')
+        testDayNum = datetime.datetime.strptime(data[0], dateFormat).timetuple().tm_yday
+
+        if testDayNum > currentDayNum - 7: # test enough data in file
+            raise Exception('Data not present from a week ago')
+        elif testDayNum == currentDayNum - 7: # if first entry is 7 days ago
+            return data
+        
+        for line in inFile: # iterate through rest of file
+            data = line.strip('\n').split('\t')
+            testDayNum = datetime.datetime.strptime(data[0], dateFormat).timetuple().tm_yday
+            if testDayNum >= currentDayNum - 7: # go until day in file is either
+                break
+    return data
         
 
 # compare new and previous data (excluding contact tracing)
@@ -300,13 +332,13 @@ def generateHTML (output, prevData, inputState, page, increaseOnly):
         print('No web page generated - no increase in threat')
         
         
-def verifyBoolArg(increaseOnly):
-    if increaseOnly.lower() == 'true':
+def setIncreaseOnly(updateType):
+    if updateType.lower() == 'daily':
         return True
-    elif increaseOnly.lower() == 'false':
+    elif updateType.lower() == 'weekly':
         return False
     else:
-        raise argparse.ArgumentTypeError('increaseOnly argument must be boolean')
+        raise argparse.ArgumentTypeError('update-type argument must be daily or weekly')
         
 
 # arguments for command line execution
@@ -314,7 +346,7 @@ ap = argparse.ArgumentParser(description='Extract info from covidactnow, generat
 ap.add_argument('file', help = 'file containing previous covid data or a new file to create')
 ap.add_argument('page', help = 'HTML file to be created')
 ap.add_argument('inputState', help = 'state abbreviation')
-ap.add_argument('increaseOnly', help = 'flag indicating whether to only generate HTML if threat increase')
+ap.add_argument('update-type', help = 'set update interval (daily|weekly)')
 # default uses path linked to python install, if driver not found insert path
 ap.add_argument('geckoDriverPath', nargs='?', default=None, help = 'optional path for geckodriver')
 
@@ -328,14 +360,12 @@ args = vars(ap.parse_args())
 file = args['file']
 page = args['page']
 inputState = args['inputState']
-increaseOnly = args['increaseOnly']
+updateType = args['update-type']
 geckoPath = args['geckoDriverPath']
 
-increaseOnly = verifyBoolArg(increaseOnly)
+increaseOnly = setIncreaseOnly(updateType)
 
-data = getWebData(inputState, geckoPath)
-# df = data[0]
-output = data[1]
+output = getWebData(inputState, geckoPath)
 
 if os.path.isfile(file): # if file with covid data exists
     response = getPrevData(file)
@@ -349,8 +379,13 @@ if os.path.isfile(file): # if file with covid data exists
             if not newLineFlag:
                 writeFile.write('\n')
             writeFile.write(('\t').join(output[:-2])) # skip state and full risk string
-                
-        generateHTML(output, prevData, inputState, page, increaseOnly)
+            
+        if increaseOnly == True: # if daily update generate html only if increase
+            generateHTML(output, prevData, inputState, page, increaseOnly)
+        else: # if weekly update, get previous week data and generate html
+            prevData = getPrevWeek(file, output[0])
+            generateHTML(output, prevData, inputState, page, increaseOnly)
+            
 else:
     writeNewFile(output)
     print('New file created')
