@@ -5,7 +5,7 @@ Created on Fri Jul 17 14:54:39 2020
 
 @author: kewilliams (minor modifications by gdancik)
 
-usage: python extract_data_for_html.py [-h] dataFile page inputState increaseOnly [geckoDriverPath]
+usage: python extract_data_for_html.py [-h] dataFile page inputState update-type [geckoDriverPath]
 
 Retrieve data from covidactnow.org for overall covid threat, daily new cases, infection rates
 positive test rates, icu availability, and contract tracing coverage.
@@ -381,7 +381,11 @@ if os.path.isfile(file): # if file with covid data exists
             writeFile.write(('\t').join(output[:-2])) # skip state and full risk string
             
         if increaseOnly == True: # if daily update generate html only if increase
-            generateHTML(output, prevData, inputState, page, increaseOnly)
+            testingDict = {'Low': 0, 'Medium': 1, 'High': 2, 'Critical': 3}
+            if testingDict[output[11]] > testingDict[prevData[11]]:
+                generateHTML(output, prevData, inputState, page, increaseOnly)
+            else:
+                print('No web page generated - no increase in overall threat level')
         else: # if weekly update, get previous week data and generate html
             prevData = getPrevWeek(file, output[0])
             generateHTML(output, prevData, inputState, page, increaseOnly)
