@@ -295,15 +295,16 @@ def generateHTML (output, prevData, inputState, page, increaseOnly):
             #writeFile.write('<p>' + overallThreat + '</p>')
             writeFile.write('<p><b>In the past day there has been an increase in risk for the following categories:</b></p><ul>')
             [writeFile.write('<li>' + i + '</li>') for i in increased] # unordered list for increased data
-            writeFile.write('</ul><p>The risks for the other categories are as follows:</p>')
+            writeFile.write('</ul><p>The values for the other categories are as follows:</p>')
             writeFile.write('<ul>') # unordered list with non-increased data
             [writeFile.write('<li>' + i + '</li>') for i in noIncrease]
             writeFile.write('</ul>')
 
+            link = 'https://covidactnow.org/state/' + inputState + '/'
+
             if output[14] == 'Connecticut' :
                 writeFile.write('<p>You can view the current scorecard for ' + output[14] + 
-                    ' by visiting: <a href="https://covidactnow.org/embed/us/' + 
-                    inputState + '">https://covidactnow.org/embed/us/' + inputState + '</a>' +
+                    ' by visiting: <a href="' + link + '">' + link + '</a>' +  
                     ' or our COVID in CT page at ' +
                     '<a href = "https://eida.easternct.edu/shiny/app/covid-ct">https://eida.easternct.edu/shiny/app/covid-ct</a>.') 
             else :
