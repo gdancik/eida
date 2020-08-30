@@ -17,7 +17,8 @@ echo "executing extract_data_for_html.py ..."
 
 d=$(date +"%Y_%m_%d")
 
-python extract_data_for_html.py scorecard.csv alerts/CT_alert_$d.html CT True
+python extract_data_for_html.py scorecard.csv CT_alert_$d.html CT daily
+
 
 echo "uploading to github..."
 git add alerts/*
