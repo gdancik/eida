@@ -75,9 +75,9 @@ generate_html_update <- function(x, county = NULL, saveFile = FALSE) {
   d2 <- as.Date(x$date[n])
 
 
-  msg1 <- paste('<li>there were', cases$current, 'new daily reported confirmed/probable cases', cases$change, "</li>\n")
-  msg2 <- paste('<li>there were', deaths$current, 'new daily reported COVID-19 associated deaths', deaths$change, "</li>\n")
-  msg3 <- paste('<li>there were', hosps$current, 'current hospitalizations', hosps$change, "</li>\n")
+  msg1 <- paste('<li> the number of new cases reported last week was ', cases$current, cases$change, "</li>\n")
+  msg2 <- paste('<li> the number of COVID-19 associated deaths reported last week was', deaths$current, deaths$change, "</li>\n")
+  msg3 <- paste('<li> the number of hospitalizations at the end of the week was', hosps$current, hosps$change, "</li>\n")
   
   state <- "In the <b>state of CT</b>"
   c2 <- ""
