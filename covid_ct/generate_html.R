@@ -76,7 +76,7 @@ generate_html_update <- function(x, county = NULL, saveFile = FALSE) {
 
 
   msg1 <- paste('<li> the number of new cases reported last week was ', cases$current, cases$change, "</li>\n")
-  msg2 <- paste('<li> the number of COVID-19 associated deaths reported last week was', deaths$current, deaths$change, "</li>\n")
+  msg2 <- paste('<li> the number of COVID-19 associated deaths reported last week was', deaths$current, deaths$change, "*</li>\n")
   msg3 <- paste('<li> the number of hospitalizations at the end of the week was', hosps$current, hosps$change, "</li>\n")
   
   state <- "In the <b>state of CT</b>"
@@ -109,6 +109,7 @@ generate_html_update <- function(x, county = NULL, saveFile = FALSE) {
     url_text <- paste(url_text, 'for', county, 'county')
   }
   
+  msg1 <- paste0(msg1, "\n<p>*Note that as of July 7, 2021, CT is updating COVID-related death counts once a week, on Thursdays.</p>")
   msg1 <- paste0(msg1,"\n\n<p>For up-to-date information, click <a href = ", url, ">here</a>",
                  " to access the ", url_text, ".</p>")
        
