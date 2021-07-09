@@ -283,7 +283,7 @@ def generateHTML (output, prevData, inputState, page, increaseOnly):
             s = """
             CovidActNow tracks risk across 5 categories:
             <ul>
-            <li>Daily new cases: this is the daily number of new cases per 100,00 individuals; a value > 1 indicates that the virus is currently not being contained. </li>
+            <li>Daily new cases: this is the daily number of new cases per 100,00 individuals, averaged over the last week; a value > 1 indicates that the virus is currently not being contained. </li>
             <li>Infection rate: this is the average number of people that an infected individual infects; a value < 1 indicates that the number of infections is decreasing.</li>
 <li>Positive test rate: this is the percent of people tested who are positive for COVID-19; experts recommend that this value be < 3% to ensure that a sufficient amount of testing is occuring.</li>
 <li>ICU headroom used: this is the percent of ICU beds in use; a value < 50% indicates that there is sufficient ICU capacity in the event of another wave of infections.</li>
