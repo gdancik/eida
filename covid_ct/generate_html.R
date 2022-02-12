@@ -1,3 +1,4 @@
+.libPaths("/home/project/R/x86_64-pc-linux-gnu-library/4.1")
 library(dplyr)
 
 # Rscript generate_html directory_with_data_folder

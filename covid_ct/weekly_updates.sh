@@ -6,7 +6,7 @@ trap func ERR
 function func() {
  
   echo "Error in weekly updates"
-  echo "Error in weekly updates" 
+  echo "Error in weekly updates" | /sbin/sendmail -v garrett.dancik@gmail.com 
   exit -1
 }
 
